@@ -487,24 +487,24 @@ if (!function_exists('data_get')) {
             return $target;
         }
 
-        foreach (explode('.', $key) as $segment) {
-            if (is_array($target)) {
-                if (!array_key_exists($segment, $target)) {
+        $key = is_array($key) ? $key : explode('.', $key);
+
+        while (($segment = array_shift($key)) !== null) {
+            if ($segment === '*') {
+                if ($target instanceof Collection) {
+                    $target = $target->all();
+                } elseif (! is_array($target)) {
                     return value($default);
                 }
 
+                $result = array_pluck($target, $key);
+
+                return in_array('*', $key) ? collapse($result) : $result;
+            }
+
+            if (accessible($target) && exists($target, $segment)) {
                 $target = $target[$segment];
-            } elseif ($target instanceof ArrayAccess) {
-                if (!isset($target[$segment])) {
-                    return value($default);
-                }
-
-                $target = $target[$segment];
-            } elseif (is_object($target)) {
-                if (!isset($target->{$segment})) {
-                    return value($default);
-                }
-
+            } elseif (is_object($target) && isset($target->{$segment})) {
                 $target = $target->{$segment};
             } else {
                 return value($default);
@@ -512,6 +512,27 @@ if (!function_exists('data_get')) {
         }
 
         return $target;
+
+    }
+
+}
+
+if (!function_exists('collapse')) {
+    function collapse($array)
+    {
+        $results = [];
+
+        foreach ($array as $values) {
+            if ($values instanceof Collection) {
+                $values = $values->all();
+            } elseif (! is_array($values)) {
+                continue;
+            }
+
+            $results = array_merge($results, $values);
+        }
+
+        return $results;
     }
 }
 
@@ -1772,4 +1793,3 @@ if (! function_exists('data_set')) {
         return array_key_exists($key, $array);
     }
 }
-
