@@ -615,7 +615,7 @@ function trait_uses_recursive($trait)
 ## Misc.
 <a name="misc"/>
 
-### data_get
+### ~~data_get~~
 <a name="data_get"/>
 
 ```php
